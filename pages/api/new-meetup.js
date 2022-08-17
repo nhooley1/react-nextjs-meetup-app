@@ -6,8 +6,6 @@ async function handler(req, res) {
   if (req.method === 'POST') {
     const data = req.body;
 
-    const { title, image, address, description } = data;
-
     const client = await MongoClient.connect(
       `mongodb+srv://${DB_CREDENTIALS.username}:${DB_CREDENTIALS.password}@cluster0.gcbnc5v.mongodb.net/meetups?retryWrites=true&w=majority`
     );
@@ -21,6 +19,8 @@ async function handler(req, res) {
     console.log(result);
 
     client.close();
+
+    res.status(201).json({ message: 'Meetup added successfully!' });
   }
 }
 

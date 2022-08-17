@@ -1,24 +1,28 @@
 import { useEffect, useState } from 'react';
 import MeetupList from '../components/meetups/MeetupList';
+import { MongoClient } from 'mongodb';
+import { DB_CREDENTIALS } from '../db-credentials/db-credentials';
 
-const DUMMY_MEETUPS = [
-  {
-    id: 'm1',
-    title: '1st meetup',
-    image:
-      'https://www.tripsavvy.com/thmb/6qw_gIgao_S0HDGTpQJkNAN8UN0=/900x0/filters:no_upscale():max_bytes(150000):strip_icc():gifv():format(webp)/GettyImages-4540860191-59930af8396e5a0010a21cde.jpg',
-    address: 'Snowdonia',
-    description: 'Welsh hills',
-  },
-  {
-    id: 'm2',
-    title: '2nd meetup',
-    image:
-      'https://www.coppermines.co.uk/wp-content/uploads/2021/04/Lake-District-Cottages-Fantastic-Facts-About-the-Lake-District-Blog-Image.jpg',
-    address: 'Lake District',
-    description: 'English hills',
-  },
-];
+// doesnt include server side imports in front end bundle, next.js detects this.
+
+// const DUMMY_MEETUPS = [
+//   {
+//     id: 'm1',
+//     title: '1st meetup',
+//     image:
+//       'https://www.tripsavvy.com/thmb/6qw_gIgao_S0HDGTpQJkNAN8UN0=/900x0/filters:no_upscale():max_bytes(150000):strip_icc():gifv():format(webp)/GettyImages-4540860191-59930af8396e5a0010a21cde.jpg',
+//     address: 'Snowdonia',
+//     description: 'Welsh hills',
+//   },
+//   {
+//     id: 'm2',
+//     title: '2nd meetup',
+//     image:
+//       'https://www.coppermines.co.uk/wp-content/uploads/2021/04/Lake-District-Cottages-Fantastic-Facts-About-the-Lake-District-Blog-Image.jpg',
+//     address: 'Lake District',
+//     description: 'English hills',
+//   },
+// ];
 
 function HomePage(props) {
   return <MeetupList meetups={props.meetups}></MeetupList>;
@@ -40,9 +44,26 @@ function HomePage(props) {
 // value is in seconds
 
 export async function getStaticProps() {
+  const client = await MongoClient.connect(
+    `mongodb+srv://${DB_CREDENTIALS.username}:${DB_CREDENTIALS.password}@cluster0.gcbnc5v.mongodb.net/meetups?retryWrites=true&w=majority`
+  );
+
+  const db = client.db();
+
+  const meetupsCollection = db.collection('meetups');
+
+  const meetups = await meetupsCollection.find().toArray();
+
+  client.close();
+
   return {
     props: {
-      meetups: DUMMY_MEETUPS,
+      meetups: meetups.map((meetup) => ({
+        title: meetup.title,
+        address: meetup.address,
+        image: meetup.image,
+        id: meetup._id.toString(),
+      })),
     },
     revalidate: 10,
   };
